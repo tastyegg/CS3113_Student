@@ -14,7 +14,7 @@ void main() {
 	float brightness = 0.0;
 	
 	for (int i = 0; i < 8; i++) {
-		brightness += attenuate(distance(lightPositions[i], varPosition), 0.0, 24.0);
+		brightness += attenuate(distance(lightPositions[i], varPosition), 0.0, 16.0);
     }
 	brightness = min(brightness, 1.0);
 

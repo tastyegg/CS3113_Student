@@ -42,6 +42,7 @@ public:
 
 	void ClassDemoApp::LoadLevel(std::string mapName);
 	void Setup();
+	void ResetPos();
 
 	void ProcessInput();
 	void Render();
@@ -72,11 +73,14 @@ private:
 	bool includePlayer2;
 	Entity *player;
 	Entity *player2;
+	Entity *box, *box2, *box3;
 	Entity *players[2];
 	PlayerController *controls[2];
 	float movingColor;
 	float infoBoxTimer;
 	GameState state;
+
+	bool flag1, flag2, flag3;
 
 	bool done;
 };

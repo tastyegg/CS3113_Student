@@ -108,7 +108,7 @@ void ClassDemoApp::Setup() {
 	player->width = BOX_SIZE;
 	player->height = BOX_SIZE;
 	player->spawnX = 2;
-	player->spawnY = -2;
+	player->spawnY = -5;
 	player->y = TILE_SIZE * player->spawnY + player->height / 2;
 	player->x = TILE_SIZE * player->spawnX + player->width / 2;
 	player->isStatic = false;
@@ -122,22 +122,44 @@ void ClassDemoApp::Setup() {
 	player2->entityType = Entity::ENTITY_PLAYER;
 	player2->width = BOX_SIZE;
 	player2->height = BOX_SIZE;
-	player2->spawnX = 2;
-	player2->spawnY = -9;
+	player2->spawnX = 1;
+	player2->spawnY = -5;
 	player2->y = TILE_SIZE * player2->spawnY + player->height / 2;
-	player2->x = TILE_SIZE * (player2->spawnX + 2) + player->width / 2;
+	player2->x = TILE_SIZE * player2->spawnX + player->width / 2;
 	player2->isStatic = false;
 
-	Entity* box = new Entity(playerSprite);
+	box = new Entity(playerSprite);
 	box->entityType = Entity::ENTITY_ENEMY;
 	box->width = BOX_SIZE;
 	box->height = BOX_SIZE;
-	box->spawnX = 21;
-	box->spawnY = -21;
+	box->spawnX = 4;
+	box->spawnY = -5;
 	box->y = TILE_SIZE * box->spawnY + box->height / 2;
-	box->x = TILE_SIZE * (box->spawnX + 2) + box->width / 2;
+	box->x = TILE_SIZE * box->spawnX + box->width / 2;
 	box->isStatic = false;
 	entities.push_back(box);
+
+	box2 = new Entity(playerSprite);
+	box2->entityType = Entity::ENTITY_ENEMY;
+	box2->width = (float)(BOX_SIZE) * 2;
+	box2->height = (float)(BOX_SIZE)* 2;
+	box2->spawnX = 7;
+	box2->spawnY = -6;
+	box2->y = TILE_SIZE * box2->spawnY + box2->height / 2;
+	box2->x = TILE_SIZE * box2->spawnX + box2->width / 2;
+	box2->isStatic = false;
+	entities.push_back(box2);
+
+	box3 = new Entity(playerSprite);
+	box3->entityType = Entity::ENTITY_ENEMY;
+	box3->width = (float)(BOX_SIZE)* 3;
+	box3->height = (float)(BOX_SIZE)* 3;
+	box3->spawnX = 12;
+	box3->spawnY = -6;
+	box3->y = TILE_SIZE * box3->spawnY + box3->height / 2;
+	box3->x = TILE_SIZE * box3->spawnX + box3->width / 2;
+	box3->isStatic = false;
+	entities.push_back(box3);
 
 
 	players[0] = player;
@@ -148,6 +170,29 @@ void ClassDemoApp::Setup() {
 	controls[1] = new PlayerController(SDL_SCANCODE_UP, SDL_SCANCODE_DOWN, SDL_SCANCODE_LEFT, SDL_SCANCODE_RIGHT, SDL_SCANCODE_RCTRL);
 
 	infoBoxTimer = 8;
+}
+
+void ClassDemoApp::ResetPos() {
+	player->spawnX = 2;
+	player->spawnY = -2;
+	player->y = TILE_SIZE * player->spawnY + player->height / 2;
+	player->x = TILE_SIZE * player->spawnX + player->width / 2;
+	player2->spawnX = 1;
+	player2->spawnY = -2;
+	player2->y = TILE_SIZE * player2->spawnY + player->height / 2;
+	player2->x = TILE_SIZE * player2->spawnX + player->width / 2;
+	box->spawnX = 4;
+	box->spawnY = -2;
+	box->y = TILE_SIZE * box->spawnY + box->height / 2;
+	box->x = TILE_SIZE * box->spawnX + box->width / 2;
+	box2->spawnX = 7;
+	box2->spawnY = -2;
+	box2->y = TILE_SIZE * box2->spawnY + box2->height / 2;
+	box2->x = TILE_SIZE * box2->spawnX + box2->width / 2;
+	box3->spawnX = 12;
+	box3->spawnY = -2;
+	box3->y = TILE_SIZE * box3->spawnY + box3->height / 2;
+	box3->x = TILE_SIZE * box3->spawnX + box3->width / 2;
 }
 
 void ClassDemoApp::UpdateAndRender() {
@@ -177,14 +222,20 @@ void ClassDemoApp::UpdateAndRender() {
 			}
 		}
 		else if (event.type == SDL_KEYDOWN) {
-			infoBoxTimer *= 0.05f;
-			if (!includePlayer2 && (event.key.keysym.scancode == controls[1]->UP ||
-				event.key.keysym.scancode == controls[1]->DOWN ||
-				event.key.keysym.scancode == controls[1]->LEFT ||
-				event.key.keysym.scancode == controls[1]->RIGHT ||
-				event.key.keysym.scancode == controls[1]->EXTEND)) {
-				includePlayer2 = true;
-				entities.push_back(player2);
+			if (event.key.keysym.scancode == SDL_SCANCODE_R) {
+				infoBoxTimer = 8;
+				ResetPos();
+			}
+			else {
+				infoBoxTimer *= 0.05f;
+				if (!includePlayer2 && (event.key.keysym.scancode == controls[1]->UP ||
+					event.key.keysym.scancode == controls[1]->DOWN ||
+					event.key.keysym.scancode == controls[1]->LEFT ||
+					event.key.keysym.scancode == controls[1]->RIGHT ||
+					event.key.keysym.scancode == controls[1]->EXTEND)) {
+					includePlayer2 = true;
+					entities.push_back(player2);
+				}
 			}
 		}
 	}
@@ -220,7 +271,7 @@ void ClassDemoApp::Update(float elapsed) {
 					players[i]->y += (players[i]->height - oldHeight) / 2;
 				}
 				float oldWidth = players[i]->width;
-				players[i]->width = lerp(players[i]->width, BOX_SIZE, 0.04f);
+				players[i]->width = lerp(players[i]->width, BOX_SIZE, 0.06f);
 				players[i]->x += players[i]->lastDirectionX * (players[i]->width - oldWidth) / 2;
 			}
 			else if (keys[controls[i]->DOWN]) {
@@ -230,30 +281,30 @@ void ClassDemoApp::Update(float elapsed) {
 					players[i]->y -= (players[i]->height - oldHeight) / 2;
 				}
 				float oldWidth = players[i]->width;
-				players[i]->width = lerp(players[i]->width, BOX_SIZE, 0.04f);
+				players[i]->width = lerp(players[i]->width, BOX_SIZE, 0.06f);
 				players[i]->x += players[i]->lastDirectionX * (players[i]->width - oldWidth) / 2;
 			}
 			else if (keys[controls[i]->LEFT]) {
 				if (!players[i]->collidedLeft) {
 					float oldWidth = players[i]->width;
-					players[i]->width = lerp(players[i]->width, 5 * BOX_SIZE, 0.03f);
+					players[i]->width = lerp(players[i]->width, 5 * BOX_SIZE, 0.02f);
 					players[i]->x -= (players[i]->width - oldWidth) / 2;
 					players[i]->lastDirectionX = 1;
 				}
 				float oldHeight = players[i]->height;
-				players[i]->height = lerp(players[i]->height, BOX_SIZE, 0.08f);
+				players[i]->height = lerp(players[i]->height, BOX_SIZE, 0.04f);
 				players[i]->y += (oldHeight - players[i]->height) / 2;
 				players[i]->velocity_y += (oldHeight - players[i]->height) * 3.4f;
 			}
 			else if (keys[controls[i]->RIGHT]) {
 				if (!players[i]->collidedRight) {
 					float oldWidth = players[i]->width;
-					players[i]->width = lerp(players[i]->width, 5 * BOX_SIZE, 0.03f);
+					players[i]->width = lerp(players[i]->width, 5 * BOX_SIZE, 0.02f);
 					players[i]->x += (players[i]->width - oldWidth) / 2;
 					players[i]->lastDirectionX = -1;
 				}
 				float oldHeight = players[i]->height;
-				players[i]->height = lerp(players[i]->height, BOX_SIZE, 0.08f);
+				players[i]->height = lerp(players[i]->height, BOX_SIZE, 0.04f);
 				players[i]->y += (oldHeight - players[i]->height) / 2;
 				players[i]->velocity_y += (oldHeight - players[i]->height) * 3.4f;
 			}
@@ -309,11 +360,31 @@ void ClassDemoApp::Update(float elapsed) {
 		}
 	}
 
+	flag1 = false;
+	flag2 = false;
+	flag3 = false;
 	//Global entities update
 	for (size_t i = 0; i < entities.size(); i++) {
 		if (!entities[i]->isStatic) {
 			//Update acceleration and velocities of entities
 			entities[i]->Update(elapsed);
+
+			int gridX = 0, gridY = 0;
+			worldToTileCoordinates(entities[i]->x, entities[i]->y, gridX, gridY);
+			if (gridX == 5 && gridY == -6) {
+				flag1 = true;
+			}
+			if ((gridX == 9 || gridX == 10) &&
+				(gridY == -6 || gridY == -7)) {
+				flag2 = true;
+			}
+			if (gridX == 16 && gridY == -7) {
+				flag3 = true;
+			}
+			if ((gridX == 14 || gridX == 15) &&
+				(gridY == -23 || gridY == -24)) {
+				ResetPos();
+			}
 
 			for (size_t j = 0; j < entities.size(); j++) {
 				if (j != i && entities[i]->CollidesWith(entities[j])) {
@@ -374,8 +445,6 @@ void ClassDemoApp::Update(float elapsed) {
 				}
 			}
 
-			int gridX = 0, gridY = 0;
-
 			//Perform Y calculations and collision with world map
 			entities[i]->y += entities[i]->velocity_y * elapsed;
 			for (int w = 0; w < 5; w++) {
@@ -415,15 +484,22 @@ void ClassDemoApp::Update(float elapsed) {
 
 			//Downward Bound Reset for player
 			if (entities[i]->y - entities[i]->height / 2 < TILE_SIZE * (-LEVEL_HEIGHT + 0.5f)) {
-				//if (entities[i]->entityType == entities[i]->ENTITY_PLAYER) {
+				if (entities[i]->entityType == entities[i]->ENTITY_PLAYER) {
 					entities[i]->width = TILE_SIZE;
 					entities[i]->height = TILE_SIZE;
-					entities[i]->y = TILE_SIZE * entities[i]->spawnY + entities[i]->height / 2;
-					entities[i]->x = TILE_SIZE * entities[i]->spawnX + entities[i]->width / 2;
-					entities[i]->velocity_y = 0;
-				//}
+				}
+				entities[i]->y = TILE_SIZE * entities[i]->spawnY + entities[i]->height / 2;
+				entities[i]->x = TILE_SIZE * entities[i]->spawnX + entities[i]->width / 2;
+				entities[i]->velocity_y = 0;
 			}
 		}
+	}
+
+	if (flag1 && flag2 && flag3) {
+		levelData[6][20] = 255;
+	}
+	else {
+		levelData[6][20] = 2;
 	}
 
 	GLint lightPositionsUniform = glGetUniformLocation(program->programID, "lightPositions");
