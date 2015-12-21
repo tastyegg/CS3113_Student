@@ -3,10 +3,11 @@
 #define WINDOW_WIDTH 640.0f
 #define PROJECTION_WIDTH 3.55f
 #define PROJECTION_HEIGHT 2.0f
-#define LEVEL_HEIGHT 20
-#define LEVEL_WIDTH 100
+#define LEVEL_HEIGHT 50
+#define LEVEL_WIDTH 30
 #define TILE_SIZE 0.3f
 #define BOX_SIZE TILE_SIZE - 0.001f
+#define NO_TILE UCHAR_MAX
 
 #ifdef _WINDOWS
 #include <GL/glew.h>
@@ -52,6 +53,7 @@ public:
 
 private:
 	ShaderProgram *program;
+	ShaderProgram *programInfo;
 	SDL_Event event;
 
 	SDL_Joystick *joystick;

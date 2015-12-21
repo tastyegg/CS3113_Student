@@ -64,7 +64,7 @@ void ClassDemoApp::LoadLevel(std::string mapName) {
 								levelData[y][x] = val - 1;
 							}
 							else {
-								levelData[y][x] = 254;
+								levelData[y][x] = NO_TILE;
 							}
 						}
 					}
@@ -91,7 +91,8 @@ void ClassDemoApp::Setup() {
 
 	srand((unsigned int)time(NULL));
 
-	program = new ShaderProgram(RESOURCE_FOLDER"vertex_textured.glsl", RESOURCE_FOLDER"fragment_textured_colored.glsl");
+	program = new ShaderProgram(RESOURCE_FOLDER"vertex_textured.glsl", RESOURCE_FOLDER"fragment_textured_lighting.glsl");
+	programInfo = new ShaderProgram(RESOURCE_FOLDER"vertex_textured.glsl", RESOURCE_FOLDER"fragment_textured_colored.glsl");
 	tileTexture = LoadTexture("Tileset.png");
 	infoBox = LoadTexture("InfoBox.png");
 
@@ -106,8 +107,8 @@ void ClassDemoApp::Setup() {
 	player->entityType = Entity::ENTITY_PLAYER;
 	player->width = BOX_SIZE;
 	player->height = BOX_SIZE;
-	player->spawnX = 1;
-	player->spawnY = -10;
+	player->spawnX = 2;
+	player->spawnY = -2;
 	player->y = TILE_SIZE * player->spawnY + player->height / 2;
 	player->x = TILE_SIZE * player->spawnX + player->width / 2;
 	player->isStatic = false;
@@ -122,10 +123,22 @@ void ClassDemoApp::Setup() {
 	player2->width = BOX_SIZE;
 	player2->height = BOX_SIZE;
 	player2->spawnX = 2;
-	player2->spawnY = -10;
+	player2->spawnY = -9;
 	player2->y = TILE_SIZE * player2->spawnY + player->height / 2;
 	player2->x = TILE_SIZE * (player2->spawnX + 2) + player->width / 2;
 	player2->isStatic = false;
+
+	Entity* box = new Entity(playerSprite);
+	box->entityType = Entity::ENTITY_ENEMY;
+	box->width = BOX_SIZE;
+	box->height = BOX_SIZE;
+	box->spawnX = 21;
+	box->spawnY = -21;
+	box->y = TILE_SIZE * box->spawnY + box->height / 2;
+	box->x = TILE_SIZE * (box->spawnX + 2) + box->width / 2;
+	box->isStatic = false;
+	entities.push_back(box);
+
 
 	players[0] = player;
 	players[1] = player2;
@@ -164,11 +177,12 @@ void ClassDemoApp::UpdateAndRender() {
 			}
 		}
 		else if (event.type == SDL_KEYDOWN) {
-			if (!includePlayer2 && event.key.keysym.scancode == controls[1]->UP ||
+			infoBoxTimer *= 0.05f;
+			if (!includePlayer2 && (event.key.keysym.scancode == controls[1]->UP ||
 				event.key.keysym.scancode == controls[1]->DOWN ||
 				event.key.keysym.scancode == controls[1]->LEFT ||
 				event.key.keysym.scancode == controls[1]->RIGHT ||
-				event.key.keysym.scancode == controls[1]->EXTEND) {
+				event.key.keysym.scancode == controls[1]->EXTEND)) {
 				includePlayer2 = true;
 				entities.push_back(player2);
 			}
@@ -209,6 +223,16 @@ void ClassDemoApp::Update(float elapsed) {
 				players[i]->width = lerp(players[i]->width, BOX_SIZE, 0.04f);
 				players[i]->x += players[i]->lastDirectionX * (players[i]->width - oldWidth) / 2;
 			}
+			else if (keys[controls[i]->DOWN]) {
+				if (!players[i]->collidedBottom) {
+					float oldHeight = players[i]->height;
+					players[i]->height = lerp(players[i]->height, 5 * BOX_SIZE, 0.03f);
+					players[i]->y -= (players[i]->height - oldHeight) / 2;
+				}
+				float oldWidth = players[i]->width;
+				players[i]->width = lerp(players[i]->width, BOX_SIZE, 0.04f);
+				players[i]->x += players[i]->lastDirectionX * (players[i]->width - oldWidth) / 2;
+			}
 			else if (keys[controls[i]->LEFT]) {
 				if (!players[i]->collidedLeft) {
 					float oldWidth = players[i]->width;
@@ -230,6 +254,15 @@ void ClassDemoApp::Update(float elapsed) {
 				}
 				float oldHeight = players[i]->height;
 				players[i]->height = lerp(players[i]->height, BOX_SIZE, 0.08f);
+				players[i]->y += (oldHeight - players[i]->height) / 2;
+				players[i]->velocity_y += (oldHeight - players[i]->height) * 3.4f;
+			}
+			else {
+				float oldWidth = players[i]->width;
+				players[i]->width = lerp(players[i]->width, BOX_SIZE, 0.003f);
+				players[i]->x += players[i]->lastDirectionX * (players[i]->width - oldWidth) / 2;
+				float oldHeight = players[i]->height;
+				players[i]->height = lerp(players[i]->height, BOX_SIZE, 0.006f);
 				players[i]->y += (oldHeight - players[i]->height) / 2;
 				players[i]->velocity_y += (oldHeight - players[i]->height) * 3.4f;
 			}
@@ -256,14 +289,14 @@ void ClassDemoApp::Update(float elapsed) {
 			if (keys[controls[i]->LEFT]) {
 				players[i]->acceleration_x = -0.2f;
 				float oldWidth = players[i]->width;
-				players[i]->width = lerp(players[i]->width, BOX_SIZE, 0.06f);
+				players[i]->width = lerp(players[i]->width, BOX_SIZE, 0.09f);
 				players[i]->x -= (oldWidth - players[i]->width) / 2;
 				players[i]->velocity_x -= (oldWidth - players[i]->width) * 1.4f;
 			}
 			else if (keys[controls[i]->RIGHT]) {
 				players[i]->acceleration_x = 0.2f;
 				float oldWidth = players[i]->width;
-				players[i]->width = lerp(players[i]->width, BOX_SIZE, 0.06f);
+				players[i]->width = lerp(players[i]->width, BOX_SIZE, 0.09f);
 				players[i]->x += (oldWidth - players[i]->width) / 2;
 				players[i]->velocity_x += (oldWidth - players[i]->width) * 1.4f;
 			}
@@ -277,7 +310,7 @@ void ClassDemoApp::Update(float elapsed) {
 	}
 
 	//Global entities update
-	for (size_t i = 0; i < entities.size(); i++)
+	for (size_t i = 0; i < entities.size(); i++) {
 		if (!entities[i]->isStatic) {
 			//Update acceleration and velocities of entities
 			entities[i]->Update(elapsed);
@@ -347,7 +380,7 @@ void ClassDemoApp::Update(float elapsed) {
 			entities[i]->y += entities[i]->velocity_y * elapsed;
 			for (int w = 0; w < 5; w++) {
 				worldToTileCoordinates(entities[i]->x + ((float)w - 2) / 5.0f * entities[i]->width, entities[i]->y - entities[i]->height / 2, gridX, gridY);
-				if (levelData[-gridY][gridX] != 254) {
+				if (levelData[-gridY][gridX] != NO_TILE) {
 					entities[i]->y = gridY * TILE_SIZE + entities[i]->height / 2 + 0.000001f;
 					entities[i]->velocity_y = 0;
 					entities[i]->collidedBottom = true;
@@ -355,7 +388,7 @@ void ClassDemoApp::Update(float elapsed) {
 					entities[i]->spawnY = gridY;
 				}
 				worldToTileCoordinates(entities[i]->x + ((float)w - 2) / 5.0f * entities[i]->width, entities[i]->y + entities[i]->height / 2, gridX, gridY);
-				if (levelData[-gridY][gridX] != 254) {
+				if (levelData[-gridY][gridX] != NO_TILE) {
 					entities[i]->y = (gridY - 1) * TILE_SIZE - entities[i]->height / 2 - 0.000001f;
 					if (entities[i]->velocity_y > 0)
 						entities[i]->velocity_y = 0;
@@ -367,13 +400,13 @@ void ClassDemoApp::Update(float elapsed) {
 			entities[i]->x += entities[i]->velocity_x * elapsed;
 			for (int h = 0; h < 5; h++) {
 				worldToTileCoordinates(entities[i]->x - entities[i]->width / 2, entities[i]->y + ((float)h - 2) / 5.0f * entities[i]->height, gridX, gridY);
-				if (levelData[-gridY][gridX] != 254) {
+				if (levelData[-gridY][gridX] != NO_TILE) {
 					entities[i]->x = (gridX + 1) * TILE_SIZE + entities[i]->width / 2 - 0.000001f;
 					entities[i]->velocity_x = 0;
 					entities[i]->collidedLeft = true;
 				}
 				worldToTileCoordinates(entities[i]->x + entities[i]->width / 2, entities[i]->y + ((float)h - 2) / 5.0f * entities[i]->height, gridX, gridY);
-				if (levelData[-gridY][gridX] != 254) {
+				if (levelData[-gridY][gridX] != NO_TILE) {
 					entities[i]->x = gridX * TILE_SIZE - entities[i]->width / 2 + 0.0000001f;
 					entities[i]->velocity_x = 0;
 					entities[i]->collidedRight = true;
@@ -382,26 +415,76 @@ void ClassDemoApp::Update(float elapsed) {
 
 			//Downward Bound Reset for player
 			if (entities[i]->y - entities[i]->height / 2 < TILE_SIZE * (-LEVEL_HEIGHT + 0.5f)) {
-				if (entities[i]->entityType == entities[i]->ENTITY_PLAYER) {
+				//if (entities[i]->entityType == entities[i]->ENTITY_PLAYER) {
 					entities[i]->width = TILE_SIZE;
 					entities[i]->height = TILE_SIZE;
 					entities[i]->y = TILE_SIZE * entities[i]->spawnY + entities[i]->height / 2;
 					entities[i]->x = TILE_SIZE * entities[i]->spawnX + entities[i]->width / 2;
 					entities[i]->velocity_y = 0;
-				}
+				//}
 			}
 		}
+	}
+
+	GLint lightPositionsUniform = glGetUniformLocation(program->programID, "lightPositions");
+	GLfloat lightPositions[2 * 2 * 4];
+
+	float xDiff = player->x - player2->x;
+	float yDiff = player->y - player2->y;
+	float scale = 1.0f;
+	if (fabs(xDiff) * 0.8f > fabs(yDiff) * 1.4f) {
+		if (fabs(xDiff) > PROJECTION_WIDTH * 1.4f) {
+			scale = PROJECTION_WIDTH * 1.4f / fabs(xDiff);
+		}
+	}
+	else if (fabs(yDiff) > PROJECTION_WIDTH * 0.8f) {
+		scale = PROJECTION_WIDTH * 0.8f / fabs(yDiff);
+	}
+
+	for (int i = 0; i < 2; i++) {
+		if (!includePlayer2) {
+			lightPositions[i * 8] = -players[i]->width / 2;
+			lightPositions[i * 8 + 1] = -players[i]->height / 2;
+			lightPositions[i * 8 + 2] = players[i]->width / 2;
+			lightPositions[i * 8 + 3] = -players[i]->height / 2;
+			lightPositions[i * 8 + 4] = -players[i]->width / 2;
+			lightPositions[i * 8 + 5] = players[i]->height / 2;
+			lightPositions[i * 8 + 6] = players[i]->width / 2;
+			lightPositions[i * 8 + 7] = players[i]->height / 2;
+			break;
+		}
+		else {
+			lightPositions[i * 8] = (-players[i]->width / 2 - (i - 0.5f) * (xDiff)) * scale;
+			lightPositions[i * 8 + 1] = (-players[i]->height / 2 - (i - 0.5f) * (yDiff)) * scale;
+			lightPositions[i * 8 + 2] = (players[i]->width / 2 - (i - 0.5f) * (xDiff)) * scale;
+			lightPositions[i * 8 + 3] = (-players[i]->height / 2 - (i - 0.5f) * (yDiff)) * scale;
+			lightPositions[i * 8 + 4] = (-players[i]->width / 2 - (i - 0.5f) * (xDiff)) * scale;
+			lightPositions[i * 8 + 5] = (players[i]->height / 2 - (i - 0.5f) * (yDiff)) * scale;
+			lightPositions[i * 8 + 6] = (players[i]->width / 2 - (i - 0.5f) * (xDiff)) * scale;
+			lightPositions[i * 8 + 7] = (players[i]->height / 2 - (i - 0.5f) * (yDiff)) * scale;
+		}
+	}
+
+	glUniform2fv(lightPositionsUniform, 8, lightPositions);
 }
 
 void ClassDemoApp::Render() {
 	glClear(GL_COLOR_BUFFER_BIT);
 	//glClearColor(0, 0.3f, 0.7f, 1.0f);
 
+	modelMatrix.identity();
 	viewMatrix.identity();
+
 	if (includePlayer2) {
-		float xDiff = player->x - player2->x;
-		if (fabs(xDiff) > PROJECTION_WIDTH * 1.4f) {
-			viewMatrix.Scale(PROJECTION_WIDTH * 1.4f / fabs(xDiff), PROJECTION_WIDTH * 1.4f / fabs(xDiff), 1);
+		float xDiff = fabs(player->x - player2->x);
+		float yDiff = fabs(player->y - player2->y);
+		if (xDiff * 0.8f > yDiff * 1.4f) {
+			if (xDiff > PROJECTION_WIDTH * 1.4f) {
+				viewMatrix.Scale(PROJECTION_WIDTH * 1.4f / xDiff, PROJECTION_WIDTH * 1.4f / xDiff, 1);
+			}
+		}
+		else if (yDiff > PROJECTION_WIDTH * 0.8f) {
+			viewMatrix.Scale(PROJECTION_WIDTH * 0.8f / yDiff, PROJECTION_WIDTH * 0.8f / yDiff, 1);
 		}
 		viewMatrix.Translate(-(player->x + player2->x) / 2, -(player->y + player2->y) / 2, 0);
 	}
@@ -422,7 +505,7 @@ void ClassDemoApp::Render() {
 	int noDraws = 0;
 	for (int y = 0; y < LEVEL_HEIGHT; y++) {
 		for (int x = 0; x < LEVEL_WIDTH; x++) {
-			if (levelData[y][x] != 254) {
+			if (levelData[y][x] != NO_TILE) {
 				float u = (float)(((int)levelData[y][x]) % 5) / (float)5;
 				float v = (float)(((int)levelData[y][x]) / 5) / (float)3;
 
@@ -486,8 +569,11 @@ void ClassDemoApp::Render() {
 	if (infoBoxTimer > 0) {
 		modelMatrix.identity();
 		viewMatrix.identity();
-		program->setModelMatrix(modelMatrix);
-		program->setViewMatrix(viewMatrix);
+		programInfo->setModelMatrix(modelMatrix);
+		programInfo->setViewMatrix(viewMatrix);
+		programInfo->setProjectionMatrix(projectionMatrix);
+
+		glUseProgram(programInfo->programID);
 
 		vertexData.clear();
 		texCoordData.clear();
@@ -522,20 +608,20 @@ void ClassDemoApp::Render() {
 			1.0f, 1.0f, 1.0f, boxTransparency,
 		});
 
-		glVertexAttribPointer(program->positionAttribute, 2, GL_FLOAT, false, 0, &vertexData[0]);
-		glEnableVertexAttribArray(program->positionAttribute);
-		glVertexAttribPointer(program->texCoordAttribute, 2, GL_FLOAT, false, 0, &texCoordData[0]);
-		glEnableVertexAttribArray(program->texCoordAttribute);
+		glVertexAttribPointer(programInfo->positionAttribute, 2, GL_FLOAT, false, 0, &vertexData[0]);
+		glEnableVertexAttribArray(programInfo->positionAttribute);
+		glVertexAttribPointer(programInfo->texCoordAttribute, 2, GL_FLOAT, false, 0, &texCoordData[0]);
+		glEnableVertexAttribArray(programInfo->texCoordAttribute);
 
-		GLuint colorAttribute = glGetAttribLocation(program->programID, "color");
+		GLuint colorAttribute = glGetAttribLocation(programInfo->programID, "color");
 		glVertexAttribPointer(colorAttribute, 4, GL_FLOAT, false, 0, &colors[0]);
 		glEnableVertexAttribArray(colorAttribute);
 
 		glBindTexture(GL_TEXTURE_2D, infoBox);
 		glDrawArrays(GL_TRIANGLES, 0, 6);
 
-		glDisableVertexAttribArray(program->positionAttribute);
-		glDisableVertexAttribArray(program->texCoordAttribute);
+		glDisableVertexAttribArray(programInfo->positionAttribute);
+		glDisableVertexAttribArray(programInfo->texCoordAttribute);
 		glDisableVertexAttribArray(colorAttribute);
 	}
 
